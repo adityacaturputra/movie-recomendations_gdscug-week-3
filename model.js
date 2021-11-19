@@ -9,32 +9,35 @@ function loadData() {
   return movie_arr;
 }
 
-// Buat fungsi untuk load data disini
-async function loadModel(){
-  console.log('loading model....');
+async function loadModel() {
+  console.log('Loading Model...');
   model = await tf.loadLayersModel(
-    'file://${__dirname}/model/model.json',
+    `file://${__dirname}/model/model.json`,
     false
   );
-  console.log('Model Loaded Successfull')
-};
+  console.log('Model Loaded Successfull');
+  // model.summary()
+}
 
-// Buat fungsi untuk memberi rekomendasi film
-exports.recommend = async function recommend(userId){
-  let user = tf.fill([movie_len],Number(userId));
+const movie_arr = tf.tensor(loadData());
+const movie_len = movies.length;
+
+exports.recommend = async function recommend(userId) {
+  let user = tf.fill([movie_len], Number(userId));
   let movie_in_js_array = movie_arr.arraySync();
   await loadModel();
-  console.log('Recommending for user: ${userId}');
-  pred_tensor = await model.predict([movie_arr,user]).reshape([movie_len]);
+  console.log(`Recommending for User: ${userId}`);
+  pred_tensor = await model.predict([movie_arr, user]).reshape([movie_len]);
   pred = pred_tensor.arraySync();
 
   let recommendations = [];
-  for (let i = 0;i<6;i++){
+  for (let i = 0; i < 6; i++) {
     max = pred_tensor.argMax().arraySync();
-    recommendations.push(movies[max]);
-    pred.splice(max,1);
-    pred_tensor = tf.tensor(pred);
+    recommendations.push(movies[max]); //Push movie with highest prediction probability
+    pred.splice(max, 1); //drop from array
+    pred_tensor = tf.tensor(pred); //create a new tensor
   }
-  console.log(recommendations)
-  return recommendations
-}
+
+  console.log(recommendations);
+  return recommendations;
+};
